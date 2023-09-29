@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using MelonLoader;
 using SeasonalJobRotation;
 
-[assembly: MelonInfo(typeof(SeasonalJobRotationMod), "SeasonalJobRotation", "1.0.1", "hawkr23")]
+[assembly: MelonInfo(typeof(SeasonalJobRotationMod), "SeasonalJobRotation", "1.1.0", "hawkr23")]
 [assembly: MelonGame("Crate Entertainment", "Farthest Frontier")]
 [assembly: MelonColor(Color = System.ConsoleColor.Blue)]
 
@@ -38,5 +38,5 @@ using SeasonalJobRotation;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.1")]
-[assembly: AssemblyFileVersion("1.0.1")]
+[assembly: AssemblyVersion("1.1.0")]
+[assembly: AssemblyFileVersion("1.1.0")]

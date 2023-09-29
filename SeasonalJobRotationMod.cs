@@ -7,15 +7,17 @@ using Il2Cpp;
 namespace SeasonalJobRotation
 {
 	public class SeasonalJobRotationMod : MelonMod
-	{
-		private GameManager gm;
+    {
+        private bool workEnabled = true;
+        private GameManager gm;
 		private TimeManager timeManager;
         private ResourceManager resourceManager;
         private int[] farmerCounts;
         private bool triggeredThisWinter = false;
         private const int delay = 100;
         private int ticks = 0;
-		private bool workEnabled = true;
+        private MelonPreferences_Category userData;
+        private MelonPreferences_Entry<int> daysEarly;
 
         private bool delayed()
 		{
@@ -41,7 +43,11 @@ namespace SeasonalJobRotation
                 {
                     farmerCounts[i] = fields[i].allocatedWorkers;
                 }
-                base.LoggerInstance.Msg("init done!");
+                userData = MelonPreferences.CreateCategory("SeasonalJobRotation");
+                daysEarly = userData.CreateEntry<int>("DaysBeforeSpring", 5);
+                if (daysEarly.Value < 5) daysEarly.Value = 5;
+                if(daysEarly.Value > 60) daysEarly.Value = 60;
+                base.LoggerInstance.Msg("init done! DaysBeforeSpring set to " + daysEarly.Value);
 			}
 		}
 
@@ -58,8 +64,9 @@ namespace SeasonalJobRotation
 			}
 
             float dayOfYear = (timeManager.currentDate.month - 1) * TimeManager.DAYS_PER_MONTH + timeManager.currentDate.day;
-            if (!triggeredThisWinter && dayOfYear >= TimeManager.FIRST_DAY_OF_WINTER) OnWinterStart();
-            else if (triggeredThisWinter && dayOfYear > TimeManager.FIRST_DAY_OF_SPRING - 5 && 
+            if (!triggeredThisWinter && (dayOfYear >= TimeManager.FIRST_DAY_OF_WINTER || 
+                dayOfYear < TimeManager.FIRST_DAY_OF_SPRING - daysEarly.Value)) OnWinterStart();
+            else if (triggeredThisWinter && dayOfYear >= TimeManager.FIRST_DAY_OF_SPRING - daysEarly.Value && 
                 dayOfYear < TimeManager.FIRST_DAY_OF_SUMMER) OnWinterEnd();
             
 		}
@@ -75,6 +82,9 @@ namespace SeasonalJobRotation
             int arborCount = resourceManager.arboristBuildings.Count;
             foreach (ArboristBuilding arbor in resourceManager.arboristBuildings) arbor.SetWorkEnabled(false, true);
 
+            int barnCount = resourceManager.barns.Count;
+            foreach (Barn barn in resourceManager.barns) barn.SetWorkEnabled(false, true);
+
             //farmers
             Il2CppSystem.Collections.Generic.List<Cropfield> fields = resourceManager.cropFields;
             farmerCounts = new int[fields.Count];
@@ -89,7 +99,7 @@ namespace SeasonalJobRotation
                 gm.villagerAutoSwapOccupationManager.SwapFarmers(-1 * farmerCounts.Sum(), true);
             }
             base.LoggerInstance.Msg("Turned off " + shackCount + " forager shacks, " + arborCount +
-                " arborist buildings, and removed " + farmerCounts.Sum() + " farmers.");
+                " arborist buildings, " + barnCount + " barns, and removed " + farmerCounts.Sum() + " farmers.");
         }
 
 		private void OnWinterEnd()
@@ -102,6 +112,9 @@ namespace SeasonalJobRotation
 
             int arborCount = resourceManager.arboristBuildings.Count;
             foreach (ArboristBuilding arbor in resourceManager.arboristBuildings) arbor.SetWorkEnabled(true, true);
+            
+            int barnCount = resourceManager.barns.Count;
+            foreach (Barn barn in resourceManager.barns) barn.SetWorkEnabled(true, true);
 
             //farmers
             Il2CppSystem.Collections.Generic.List<Cropfield> fields = resourceManager.cropFields;
@@ -115,7 +128,7 @@ namespace SeasonalJobRotation
                 gm.villagerAutoSwapOccupationManager.SwapFarmers(farmerCounts.Sum(), true);
             }
             base.LoggerInstance.Msg("Turned on " + shackCount + " forager shacks, " + arborCount +
-                " arborist buildings, and added " + farmerCounts.Sum() + " farmers.");
+                " arborist buildings, " + barnCount + " barns, and added " + farmerCounts.Sum() + " farmers.");
         }
 
         private void testSwap()
